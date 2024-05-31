@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juicio por jurado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Juicio por jurado</h1>
+        <form action="/" method="post" enctype="multipart/form-data" class="file-upload-form">
+            <label for="file-upload" class="custom-file-upload">
+                <i class="fas fa-file-excel">Seleccionar archivo Excel</i> 
+            </label>
+            <input id="file-upload" type="file" name="file">
+            <button type="submit" class="upload-button">Cargar y Seleccionar</button>
+        </form>
+        <div class="column-container">
+            <div class="column">
+                <h2>Jurados Titulares</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="centrado">DNI</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for titular in titulares %}
+                        <tr>
+                            <td class="centrado">{{ titular.DNI }}</td>
+                            <td>{{ titular.Nombre }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="column">
+                <h2>Jurados Suplentes</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="centrado">DNI</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suplente in suplentes %}
+                        <tr>
+                            <td class="centrado">{{ suplente.DNI }}</td>
+                            <td>{{ suplente.Nombre }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
