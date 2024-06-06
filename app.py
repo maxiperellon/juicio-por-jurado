@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 import pandas as pd
 import random
@@ -9,9 +9,19 @@ app = Flask(__name__)
 app.config['DATA_FOLDER'] = 'data'
 app.config['ALLOWED_EXTENSIONS'] = {'xlsx'}
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+# Función para verificar si el archivo es permitido.
+def archivo_permitido(nombre_archivo):
+    # Verifica que el nombre del archivo tenga un punto y una extensión.
+    if '.' not in nombre_archivo:
+        return False
+    
+    # Extrae la extensión del archivo y la convierte a minúsculas.
+    extension = nombre_archivo.rsplit('.', 1)[1].lower()
+    
+    # Verifica si la extensión está en la lista de extensiones permitidas.
+    return extension in app.config['ALLOWED_EXTENSIONS']
 
+# Función para importar datos desde un archivo Excel.
 def importar_datos(filepath):
     datos = pd.read_excel(filepath)
     filas_como_dict = datos.to_dict(orient='records')
@@ -21,39 +31,44 @@ def importar_datos(filepath):
             lista_datos.append({"DNI": dni, "Nombre": nombre})
     return lista_datos
 
-def seleccion(datos, num_titulares):
-    if len(datos) < 16:
-        print("El número de registros en los datos es menor a 16.")
+# Función para seleccionar titulares y suplentes.
+def seleccion(datos, alumnos_random, num_titulares):
+    if len(datos) < alumnos_random:
+        print(f"El número de registros en los datos es menor a { alumnos_random }.")
+        return [], []
     
-    seleccionados = random.sample(datos, 16)
+    seleccionados = random.sample(datos, alumnos_random)
     titulares = seleccionados[:num_titulares]
     suplentes = seleccionados[num_titulares:]
     return titulares, suplentes
 
+# Ruta principal para cargar y mostrar datos.
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    alumnos_random = 16
     num_titulares = 12
     titulares, suplentes = [], []
     json_path = os.path.join(app.config['DATA_FOLDER'], 'alumnos.json')
 
     if request.method == 'POST':
         if 'file' not in request.files:
-            return 'No file part'
+            return 'No hay archivo en la solicitud'
         file = request.files['file']
         if file.filename == '':
-            return 'No selected file'
-        if file and allowed_file(file.filename):
+            return 'No se seleccionó ningún archivo'
+        if file and archivo_permitido(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['DATA_FOLDER'], filename)
             file.save(filepath)
             datos = importar_datos(filepath)
             try:
-                titulares, suplentes = seleccion(datos, num_titulares)
+                titulares, suplentes = seleccion(datos, alumnos_random, num_titulares)
                 with open(json_path, 'w') as json_file:
                     json.dump({"titulares": titulares, "suplentes": suplentes}, json_file)
             except ValueError as e:
                 return str(e)
-
+            
+    # Carga datos del archivo JSON si existe.
     if os.path.exists(json_path):
         with open(json_path, 'r') as json_file:
             data = json.load(json_file)
@@ -63,6 +78,4 @@ def index():
     return render_template('index.html', titulares=titulares, suplentes=suplentes)
 
 if __name__ == '__main__':
-    if not os.path.exists(app.config['DATA_FOLDER']):
-        os.makedirs(app.config['DATA_FOLDER'])
     app.run(debug=True)
