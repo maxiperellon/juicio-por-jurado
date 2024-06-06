@@ -24,6 +24,8 @@ Primero, clone el repositorio en su máquina local:
 
 ```bash
 git clone https://github.com/maxiperellon/juicio-por-jurado.git
+```
+```bash
 cd juicio-por-jurado
 ```
 
